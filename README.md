@@ -107,15 +107,15 @@ readOnly defaults to False and if set to True will block any INSERT,
 CREATE, UPDATE or DROP operations in the included methods.  If you add
 your own methods, you should honour this in them.
 
-create defaults to False.  If set to True, then __init__() will
+create defaults to False.  If set to True, then \_\_init\_\_() will
 automatically call createTable.  If the table is already there, then
 this is non-destructive and can be helpful on the grounds that it will
 automatically generate whatever objects are needed.  If you are aiming
 to segregate administration from operation, however, you will want to
 set this to False.
 
-reset defaults to False.  If set to True, then __init__() will
-automatically call dropTable.  **This is destructive!** __init__()
+reset defaults to False.  If set to True, then \_\_init\_\_() will
+automatically call dropTable.  **This is destructive!** \_\_init\_\_()
 will also reset create to True if reset is True, so that the database
 objects are automatically made ready after deleting them.
 
