@@ -1,6 +1,6 @@
 # Table
 
-Abstract method to manage a database table
+Abstract class to manage a database table
 
 ## What?
 
