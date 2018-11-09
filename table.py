@@ -19,13 +19,18 @@ class Table:
     getId_insert = {"SQLite3" : "INSERT INTO foo (foo) VALUES (?)",
                     "PG"      : "INSERT INTO foo (foo) VALUES (%s)"}
 
+    getId_currval = {
+        "PG" : "SELECT CURRVAL('foo_seq')"
+    }
+
     createTable_list = {
         "SQLite3" : [
             "CREATE TABLE IF NOT EXISTS foo (id INTEGER PRIMARY KEY AUTOINCREMENT, foo TEXT)",
             "CREATE INDEX IF NOT EXISTS foo_idx ON foo(foo)"
         ],
         "PG" : [
-            "CREATE TABLE IF NOT EXISTS foo (id INTEGER PRIMARY KEY AUTOINCREMENT, foo TEXT)",
+            "CREATE SEQUENCE IF NOT EXISTS foo_seq",
+            "CREATE TABLE IF NOT EXISTS foo (id INTEGER PRIMARY KEY NOT NULL DEFAULT NEXTVAL('foo_seq'), foo TEXT)",
             "CREATE INDEX IF NOT EXISTS foo_idx ON foo(foo)"
         ]
     }
@@ -37,11 +42,12 @@ class Table:
         ],
         "PG" : [
             "DROP INDEX IF EXISTS foo_idx",
-            "DROP TABLE IF EXISTS foo"
+            "DROP TABLE IF EXISTS foo",
+            "DROP SEQUENCE IF EXISTS foo_seq"
         ]
     }
 
-    def __init__(self, dbh, dbtype = "SQLite3", readOnly = False, create = False, reset = False):
+    def __init__(self, dbh, dbType = "SQLite3", readOnly = False, create = False, reset = False):
         """Sets up a Table object.  Put a reference to the database handle and
         the read-only flag on the object as parameters.  If warranted,
         drop and/or create the table by calling the relevant methods.
@@ -76,14 +82,19 @@ class Table:
         cursor = self.dbh.cursor()
         rowId = None
 
-        cursor.execute(self.getId_select{self.dbType}, data)
+        cursor.execute(self.getId_select[self.dbType], data)
         result = cursor.fetchone()
 
         if (self.readOnly and (result is None)):
             return None
         elif (result is None):
-            cursor.execute(self.getId_insert{self.dbType}, data)
-            rowId = cursor.lastrowid
+            cursor.execute(self.getId_insert[self.dbType], data)
+            if (self.dbType == "SQLite3"):
+                rowId = cursor.lastrowid
+            elif (self.dbType == "PG"):
+                cursor.execute (self.getId_currval[self.dbType], [])
+                result = cursor.fetchone()
+                rowid = result[0]
         else:
             rowId = result[0]
 
@@ -95,8 +106,9 @@ class Table:
         above or in a class that inherits this method.
 
         """
-        for command in self.createTable_list{self.dbType}:
-            self.dbh.execute(command)
+        cursor = self.dbh.cursor()
+        for command in self.createTable_list[self.dbType]:
+            cursor.execute(command)
 
     def dropTable (self):
         """Drops the table and anything that goes with it by stepping through
@@ -104,6 +116,7 @@ class Table:
         a class that inherits this method.
 
         """
-        for command in self.dropTable_list{self.dbType}:
-            self.dbh.execute(command)
+        cursor = self.dbh.cursor()
+        for command in self.dropTable_list[self.dbType]:
+            cursor.execute(command)
 
