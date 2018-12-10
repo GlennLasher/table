@@ -47,6 +47,11 @@ class Table:
         ]
     }
 
+    getById_select = {
+        "SQLite3 " : "SELECT foo FROM foo WHERE id = ?",
+        "PG"       : "SELECT foo FROM foo WHERE id = %d"
+    }
+    
     def __init__(self, dbh, dbType = "SQLite3", readOnly = False, create = False, reset = False):
         """Sets up a Table object.  Put a reference to the database handle and
         the read-only flag on the object as parameters.  If warranted,
@@ -100,6 +105,17 @@ class Table:
 
         return rowId
 
+    def getById(self, rowId):
+        """Retrieves a row from the database by its ID.  Returned row does not
+        ideally contain the ID field, but can do just by changing the
+        getByID_select variable above.
+
+        """
+        
+        cursor = self.dbh.cursor()
+        cursor.execute(self.getById_select[self.dbType], (rowId,))
+        return cursor.fetchone()
+        
     def createTable (self):
         """Creates the table and anything that needs to go with it by stepping
         through the commands stored in the createTable_list variable
