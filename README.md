@@ -89,6 +89,11 @@ Bumddb, slightly updated to handle the multi-database capability:
             ]
         }
 
+       getById_select = {
+           "SQLite3" : "SELECT status FROM status_v1 WHERE id = ?",
+	   "PG"      : "SELECT status FROM status_v1 WHERE id = %d"
+       }
+
 ...and that's pretty much it.  You can also add more methods if you see fit.
 
 ### Then what?
@@ -135,6 +140,13 @@ If the objective is to just make sure a record is present and you do
 not care about where it is, you can simply not assign the return
 value.
 
+    table.getById(rowId)
+
+This will attempt to look up a set of values for a (hopefully)
+existing record by that record's rowId.  If it succeeds, it will
+return the data as a tuple.  You can set up exactly how this works by
+how you define the getById_select strings.
+
     table.createTable()
 
 This will create the table and its associated database objects, such
@@ -142,7 +154,7 @@ as sequences and indices.  You probably don't need to call it directly
 (just set create = True when you instantiate the object) but there is
 no reason you can't.
 
-    tale.dropTable()
+    table.dropTable()
 
 This will remove the table and its associated objects, such as
 sequences and indices.  **This is destructive!**.  For most cases, you
