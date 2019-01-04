@@ -2,7 +2,7 @@
 
 
 
-class Table:
+class Table (object):
     """Implements a generic table and some methods to operate on one.
     These will be inherited by other classes.
 
