@@ -25,7 +25,7 @@ So....
 First, import it into a module where you're going to override some of
 the properties.
 
-    import Table
+    from table import Table
 
 Next, there are some variables to override.
 
@@ -101,7 +101,7 @@ Bumddb, slightly updated to handle the multi-database capability:
 
        getById_select = {
            "SQLite3" : "SELECT status FROM status_v1 WHERE id = ?",
-	   "PG"      : "SELECT status FROM status_v1 WHERE id = %d"
+           "PG"      : "SELECT status FROM status_v1 WHERE id = %d"
        }
 
 ...and that's pretty much it.  You can also add more methods if you see fit.
@@ -134,7 +134,13 @@ automatically call dropTable.  **This is destructive!** \_\_init\_\_()
 will also reset create to True if reset is True, so that the database
 objects are automatically made ready after deleting them.
 
-    rowId = table.getId(data)
+verbose defaults to False.  If set to True, then \_\_init\_\_() will
+add this flag to the object.  As of this writing, the methods in this
+module do not do anything with this, however, you can use it in any
+way you like in your derived clases.  The intent is for it to cause
+debug information to be sent to stdout.
+
+    rowId = table.getId(datm [, datum [ . . . ]] )
 
 This will attempt to look up a value or set of values in the table
 that we are operating on.
