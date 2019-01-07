@@ -52,12 +52,14 @@ class Table (object):
         "PG"       : "SELECT foo FROM foo WHERE id = %d"
     }
     
-    def __init__(self, dbh, dbType = "SQLite3", readOnly = False, create = False, reset = False):
+    def __init__(self, dbh, dbType = "SQLite3", readOnly = False, create = False, reset = False, verbose = False):
         """Sets up a Table object.  Put a reference to the database handle and
         the read-only flag on the object as parameters.  If warranted,
         drop and/or create the table by calling the relevant methods.
 
         """
+        self.verbose = verbose
+        
         self.dbh = dbh
         self.readOnly = readOnly
 
