@@ -53,9 +53,32 @@ class Table (object):
     }
     
     def __init__(self, dbh, dbType = "SQLite3", readOnly = False, create = False, reset = False, verbose = False):
-        """Sets up a Table object.  Put a reference to the database handle and
-        the read-only flag on the object as parameters.  If warranted,
-        drop and/or create the table by calling the relevant methods.
+        """Sets up a Table object.  Puts database handle and type, and
+        readOnly/verbose properties onthe object.
+
+        dbh is a connection to the database.
+
+        dbType is either SQLite3 or PG to indicate SQLite3 or
+        PostgreSQL, respectively
+
+        readOnly, if True, will prevent any writes to the database via this object.
+
+        create, if True, will cause the table and related objects to
+        be created by calling createTable().  It is expected that the
+        CREATE TABLE and CREATE INDEX statements, and any others
+        called by createTable(), contain an IF NOT EXISTS clause so
+        that they will silently abort if the objects already exist.
+
+        reset, if True, will cause the table and related objects to be
+        deleted by calling dropTable().  In complement to createTable,
+        it is expected that the DROP TABLE and DROP INDEX statements,
+        and any others called by dropTable(), contain an IF EXISTS
+        clause so that they will silently abort if the objects do not
+        exist.
+
+        verbose, if True, will enable debugging messages to be written
+        to stdout.  You can use this in your derived classes as you
+        see fit.
 
         """
         self.verbose = verbose
@@ -81,6 +104,7 @@ class Table (object):
         a new record with the given data and then return the ID of the
         new record.  If readOnly is True and the record is not found,
         returns None.
+
         """
         
         if (len(data) != self.dataSize):

@@ -27,7 +27,7 @@ the properties.
 
     import Table
 
-Next, there are five variables to override.
+Next, there are some variables to override.
 
 The simplest one is dataSize.  This is an int and is the number of
 columns you're going to present when inserting a row into the table.
@@ -38,11 +38,21 @@ parameterized as appropriate to the sqlite3 and psycopg modules.
 
 getId_insert is the same concept with the INSERT statement for getId.
 
+getId_currval is only really used by PostgreSQL (because the relevant
+mechanism differs from that of SQLite), however, it is still in her in
+dict form, just in case I decided to add other database engines at a
+later date.  It should contain a SQL statement that will retrieve the
+current value of the sequence used to produce row IDs for this table.
+
 createTable_list is a dict of lists, each list containing the commands
 needed to create a given table and its accessories.
 
 dropTable_list is a dict of lists, each list containing the commands
 needed to drop a table and its accessories.
+
+getById_select is a dict of str's, containing SELECT statements to
+execute, parameterized as appropriate, to retrieve a record from the
+table by its id.
 
 For instance, here is the code for StatusTable taken out of my module
 Bumddb, slightly updated to handle the multi-database capability:
