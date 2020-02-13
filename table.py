@@ -16,12 +16,8 @@ class Table (object):
     dataSize = 1
     getId_select = {"SQLite3" : "SELECT id FROM foo WHERE foo = ?",
                     "PG"      : "SELECT id FROM foo WHERE foo = %s"}
-    getId_insert = {"SQLite3" : "INSERT INTO foo (foo) VALUES (?)",
-                    "PG"      : "INSERT INTO foo (foo) VALUES (%s)"}
-
-    getId_currval = {
-        "PG" : "SELECT CURRVAL('foo_seq')"
-    }
+    getId_insert = None
+    getId_currval = None
 
     createTable_list = {
         "SQLite3" : [
@@ -51,7 +47,20 @@ class Table (object):
         "SQLite3 " : "SELECT foo FROM foo WHERE id = ?",
         "PG"       : "SELECT foo FROM foo WHERE id = %d"
     }
-    
+
+    insertRow_insert = {"SQLite3" : "INSERT INTO foo (foo) VALUES (?)",
+                        "PG"      : "INSERT INTO foo (foo) VALUES (%s)"}
+
+    currval = {
+        "PG" : "SELECT CURRVAL('foo_seq')"
+    }
+
+    updateRow_update = {"SQLite3" : "UPDATE foo SET foo = ? WHERE id = ?",
+                        "PG"      : "UPDATE foo SET foo = %s WHERE id = %d"}
+
+    deleteRow_delete = {"SQLite3" : "DELETE FROM foo WHERE id = ?",
+                        "PG"      : "DELETE FROM foo WHERE id = %d"}
+
     def __init__(self, dbh, dbType = "SQLite3", readOnly = False, create = False, reset = False, verbose = False):
         """Sets up a Table object.  Puts database handle and type, and
         readOnly/verbose properties onthe object.
@@ -81,15 +90,29 @@ class Table (object):
         see fit.
 
         """
-        self.verbose = verbose
+
+        #Plain object properties
         
+        self.verbose = verbose
         self.dbh = dbh
         self.readOnly = readOnly
 
+        #Manage legacy
+
+        if self.getId_insert is not None:
+            self.insertRow_insert = self.getId_insert
+
+        if self.getId_currval is not None:
+            self.currval = self.getId_currval
+        
+        #Manage bad DB types
+        
         if (dbType not in ["SQLite3", "PG"]):
             raise NotImplementedError("dbType %s is not supported.")
         self.dbType = dbType
 
+        #Optional automatic DB object creation
+        
         if (reset):
             create = True
             self.dropTable()
@@ -119,13 +142,7 @@ class Table (object):
         if (self.readOnly and (result is None)):
             return None
         elif (result is None):
-            cursor.execute(self.getId_insert[self.dbType], data)
-            if (self.dbType == "SQLite3"):
-                rowId = cursor.lastrowid
-            elif (self.dbType == "PG"):
-                cursor.execute (self.getId_currval[self.dbType], [])
-                result = cursor.fetchone()
-                rowid = result[0]
+            rowId = self.insertRow(*data)
         else:
             rowId = result[0]
 
@@ -162,3 +179,49 @@ class Table (object):
         for command in self.dropTable_list[self.dbType]:
             cursor.execute(command)
 
+    def insertRow (self, *data):
+        """Takes a data tuple and adds a row to the table containing that
+        tuple, similar to getId.  Unlike getId, it does not first check to see
+        if there is an existing row, so duplicate rows become possible."""
+
+        if (self.readOnly):
+            return None
+        
+        if (len(data) != self.dataSize):
+            raise TypeError("insertRow is expecting %d arguments and got %d." %(self.dataSize, len(data)))
+
+        cursor = self.dbh.cursor()
+        rowId = None
+
+        cursor.execute(self.insertRow_insert[self.dbType], data)
+        if (self.dbType == SQLite3):
+            rowId = cursor.lastrowid
+        elif(self.dbType = "PG"):
+            cursor.execute(self.currval[self.dbType], [])
+            result = cursor.fetchone()
+            rowId = result[0]
+            
+        return rowId
+
+    def updateRow (self, rowId, *data):
+        """Takes a rowId and a data tuple, updates all of the values in the
+        row to those in the tuple"""
+
+        if (self.readOnly):
+            raise NotImplementedError("Writing to read-only tables is not yet (and probably won't be) implemented.")
+
+        if (len(data) != self.dataSize):
+            raise TypeError("getId is expecting %d arguments and got %d." %(self.dataSize, len(data)))
+
+        cursor = self.dbh.cursor()
+        cursor.execute (self.updateRow_update[self.dbType], data + [rowId])
+
+    def deleteRow(self, rowId):
+        """Takes a rowId and deletes the row"""
+
+        if (self.readOnly):
+            raise NotImplementedError("Writing to read-only tables is not yet (and probably won't be) implemented.")
+
+        cursor = self.dbh.cursor()
+        cursor.execute(self.deleteRow_delete[self.dbType], (rowId,))
+        
